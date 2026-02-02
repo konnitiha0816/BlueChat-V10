@@ -20,19 +20,19 @@ io.on('connection', (socket) => {
     socket.on('request-join', (data) => {
         const room = rooms.get(data.roomId);
         if (room) {
-            // ホストへ通知
+            // ホストへ承認要請を送る
             io.to(room.hostId).emit('admin-approval-request', { 
                 senderId: socket.id, 
                 nickname: data.nickname 
             });
-            // 申請者へ待機指示
+            // ゲストには待機画面を出させる
             socket.emit('waiting-approval');
         } else {
             socket.emit('join-error', '部屋が見つかりません');
         }
     });
 
-    // 承認処理
+    // 承認実行
     socket.on('approve-user', (targetId) => {
         io.to(targetId).emit('join-approved');
     });
@@ -46,9 +46,8 @@ io.on('connection', (socket) => {
         });
     });
 
-    // 💬 チャット送信 (修正済み)
+    // チャット送信
     socket.on('send-chat', (data) => {
-        // ルーム内の全員（送信者含む）に配信
         io.to(data.roomId).emit('receive-chat', data);
     });
 });

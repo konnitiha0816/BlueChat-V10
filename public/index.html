@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Blue Chat V7 Perfect</title>
+    <title>Blue Chat V7 Complete</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
@@ -11,7 +11,7 @@
         .night-bg { background: linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1516339901600-2e1a62dc0c45?auto=format&fit=crop&w=1920&q=80'); background-size: cover; }
         .hidden { display: none !important; }
         
-        /* アニメーション関連 */
+        /* アニメーション */
         .full { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.8s; }
         .success-zoom { transform: scale(5); opacity: 0; pointer-events: none; }
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; z-index: 9999; }
@@ -19,32 +19,36 @@
         @keyframes flash-anim { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
         .glass { background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); padding: 40px; border-radius: 30px; width: 400px; border: 1px solid rgba(255,255,255,0.1); }
-        
-        /* 画面上部情報バー */
         .info-bar { position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.8); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; z-index: 1000; font-size: 16px; font-weight: bold; border-bottom: 1px solid #333; }
 
-        /* ビデオグリッド & ミラー設定 */
+        /* ビデオ関連 */
         #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); grid-auto-rows: 1fr; width: 100%; height: 100vh; padding: 70px 20px 100px 20px; gap: 20px; box-sizing: border-box; background: #121212; }
         .video-container { position: relative; width: 100%; height: 100%; border-radius: 20px; overflow: hidden; background: #000; }
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); } /* 鏡設定 */
-        video.screen-share { transform: scaleX(1) !important; object-fit: contain; } /* 共有は反転なし */
-        
+        /* 鏡モード設定 */
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        /* 画面共有は反転しない */
+        video.screen-share { transform: scaleX(1) !important; object-fit: contain; }
         .nickname-label { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); padding: 6px 14px; border-radius: 8px; font-size: 14px; }
 
-        /* ボタン類 */
-        .btn-main { width: 100%; padding: 18px; margin: 12px 0; border-radius: 60px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; transition:0.2s; }
+        /* ボタン調整 */
+        .btn-main { width: 100%; padding: 18px; margin: 12px 0; border-radius: 60px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
         .btn-blue { background: #0078d4; color: white; }
         .btn-green { background: #0f9d58; color: white; }
         .btn-approve { background: #0f9d58; color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; }
-        .toolbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; background: rgba(30,30,30,0.9); padding: 15px 40px; border-radius: 100px; z-index: 1000; }
-        .icon-btn { width: 55px; height: 55px; border-radius: 50%; border: none; background: #444; color: white; cursor: pointer; font-size: 24px; }
         
+        .toolbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; background: rgba(30,30,30,0.9); padding: 15px 40px; border-radius: 100px; z-index: 1000; }
+        
+        /* 🎤 マイク・カメラボタンの色設定 */
+        .icon-btn { width: 55px; height: 55px; border-radius: 50%; border: none; background: #444; color: white; cursor: pointer; font-size: 24px; transition: background 0.3s; }
+        .icon-btn:hover { background: #666; }
+        /* OFFの時は赤くする（重要！） */
+        .icon-btn.off { background: #ea4335 !important; }
+
         /* サイドバー */
         .sidebar { position: fixed; right: -450px; top: 0; width: 400px; height: 100%; background: #1e1e1e; color: #fff; transition: 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1); z-index: 2000; padding: 25px; display: flex; flex-direction: column; box-shadow: -5px 0 30px rgba(0,0,0,0.5); box-sizing: border-box; }
         .sidebar.open { right: 0; }
         .sidebar h3 { border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
         
-        /* 承認ボックスのデザイン */
         #approval-list { max-height: 200px; overflow-y: auto; margin-bottom: 20px; }
         .approval-item { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #555; }
     </style>
@@ -114,7 +118,7 @@
             <h3>チャット</h3>
             <div id="chat-logs" style="flex:1; overflow-y:auto; padding:15px; background:#2a2a2a; border-radius:15px; margin-bottom:15px;"></div>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="chat-in" style="flex:1; padding:15px; border-radius:10px; border:none;" placeholder="メッセージ...">
+                <input type="text" id="chat-in" style="flex:1; padding:15px; border-radius:10px; border:none;" placeholder="メッセージ..." onkeydown="if(event.key==='Enter') sendChat()">
                 <button class="btn-blue" style="width:70px; border-radius:10px; border:none;" onclick="sendChat()">送信</button>
             </div>
         </div>

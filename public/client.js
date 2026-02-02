@@ -7,7 +7,6 @@ const sndTitle = new Audio('/sounds/title.mp3'); sndTitle.loop = true;
 const sndNotify = new Audio('/sounds/notify.mp3');
 const sndSuccess = new Audio('https://www.soundjay.com/buttons/sounds/button-37.mp3');
 
-// 画面遷移ユーティリティ
 const show = (id) => {
     document.querySelectorAll('body > div.full, body > div#screen-call').forEach(d => d.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
@@ -23,7 +22,7 @@ function initApp() {
     document.getElementById('body-bg').className = (h >= 5 && h < 17) ? 'day-bg' : 'night-bg';
 }
 
-// 九九認証 (BGM停止&アニメーション)
+// 認証
 let ans;
 function startCaptcha() {
     sndTitle.pause();
@@ -51,14 +50,18 @@ function checkCaptcha() {
     }
 }
 
-// 参加・作成ロジック
-function handleCreate() {
+// 🚀 高速部屋作成（ラグなし）
+async function handleCreate() {
     myNick = document.getElementById('user-nick').value.trim();
     if(!myNick) return alert("名前を入力してください！");
+    
     const id = prompt("部屋ID(6文字)を決めてください");
     if(id && id.length === 6) { 
-        currentRoom = id; 
+        currentRoom = id;
+        // 先にカメラ起動プロセスを開始（爆速化）
+        startSession(id); 
         socket.emit('create-room', id); 
+        document.getElementById('approval-box-container').style.display = 'block';
     }
 }
 
@@ -72,11 +75,6 @@ function handleJoin() {
 }
 
 // Socketイベント
-socket.on('room-created', id => {
-    startSession(id);
-    document.getElementById('approval-box-container').style.display = 'block'; // ホスト用表示
-});
-
 socket.on('waiting-approval', () => { show('screen-wait'); });
 
 socket.on('admin-approval-request', data => {
@@ -105,17 +103,31 @@ function approveUser(targetId) {
 
 socket.on('join-approved', () => { startSession(currentRoom); });
 
-// セッション開始 (HD画質)
+// 📹 セッション開始（高画質化設定）
 async function startSession(roomId) {
+    if (!document.getElementById('screen-call').classList.contains('hidden')) return;
+
     try {
+        // ✨ HD画質設定 (1280x720) ✨
         myStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 1280, height: 720 }, audio: true
+            video: { 
+                width: { ideal: 1280 }, 
+                height: { ideal: 720 },
+                frameRate: { ideal: 30 }
+            }, 
+            audio: true
         });
+        
         show('screen-call');
         document.getElementById('display-room-id').innerText = "ID: " + roomId;
         addVideo(myStream, myNick, true);
-        socket.emit('join-call', { roomId: roomId, peerId: peer.id, nickname: myNick });
-    } catch (e) { alert("カメラ・マイクの権限がありません！"); }
+        
+        if (peer.id) {
+            socket.emit('join-call', { roomId: roomId, peerId: peer.id, nickname: myNick });
+        }
+    } catch (e) { 
+        alert("カメラ・マイクの権限がありません！"); 
+    }
 }
 
 peer.on('open', id => {});
@@ -146,61 +158,48 @@ function addVideo(stream, nickname, isMe = false, isScreen = false) {
     stream.getVideoTracks()[0].onended = () => container.remove();
 }
 
-// 画面共有 (完全実装)
+// 画面共有
 async function toggleScreenShare() {
     if(screenStream) {
-        // 共有停止処理
         screenStream.getTracks().forEach(t => t.stop());
         screenStream = null;
         return;
     }
-    // 共有開始処理
     try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        // 画面共有も高画質設定
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: true });
         addVideo(screenStream, "画面共有", false, true);
-        
-        // 接続中の全メンバーに映像を送る
         Object.values(peer.connections).forEach(connList => {
             connList.forEach(conn => {
                 peer.call(conn.peer, screenStream);
             });
         });
-
-        // 共有停止ボタンが押された時の処理
         screenStream.getVideoTracks()[0].onended = () => {
             const videoElem = document.getElementById('vid-' + screenStream.id);
             if(videoElem) videoElem.parentElement.remove();
             screenStream = null;
         };
-    } catch(err) {
-        console.log("共有キャンセル");
-    }
+    } catch(err) { console.log("共有キャンセル"); }
 }
 
-// マイク・カメラ・サイドバー制御
+// マイク・カメラ制御
 function toggleMic() { 
     isMicOn = !isMicOn; 
     myStream.getAudioTracks()[0].enabled = isMicOn; 
-    
-    // 赤色(OFF)クラスの切り替え
     const btn = document.getElementById('btn-mic');
-    if(isMicOn) btn.classList.remove('off'); // ONなら黒
-    else btn.classList.add('off');          // OFFなら赤
+    if(isMicOn) btn.classList.remove('off'); else btn.classList.add('off');
 }
 
 function toggleCam() { 
     isCamOn = !isCamOn; 
     myStream.getVideoTracks()[0].enabled = isCamOn; 
-    
-    // 赤色(OFF)クラスの切り替え
     const btn = document.getElementById('btn-cam');
-    if(isCamOn) btn.classList.remove('off'); // ONなら黒
-    else btn.classList.add('off');          // OFFなら赤
+    if(isCamOn) btn.classList.remove('off'); else btn.classList.add('off');
 }
 
 function toggleSidebar() { document.getElementById('side-bar').classList.toggle('open'); }
 
-// チャット機能 (修正済み)
+// チャット
 function sendChat() {
     const input = document.getElementById('chat-in');
     const text = input.value.trim();
@@ -216,6 +215,5 @@ socket.on('receive-chat', data => {
     d.style.marginBottom = "10px";
     d.innerHTML = `<b style="color:#0078d4">${data.sender}:</b> ${data.text}`;
     logs.appendChild(d);
-    // 自動スクロール
     logs.scrollTop = logs.scrollHeight;
 });

@@ -13,7 +13,7 @@
         .night-bg { background: linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1516339901600-2e1a62dc0c45?auto=format&fit=crop&w=1920&q=80'); background-size: cover; }
         .hidden { display: none !important; }
         
-        /* 画面遷移アニメーション */
+        /* アニメーション */
         .full { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.8s; }
         .success-zoom { transform: scale(5); opacity: 0; pointer-events: none; }
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; z-index: 9999; }
@@ -22,17 +22,17 @@
 
         .glass { background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); padding: 40px; border-radius: 30px; width: 400px; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* ⏰ 時刻表示（左へ80pxずらして余裕を持たせる） */
+        /* ⏰ 時刻表示: 左へ80px移動し、画面端で切れないように調整 */
         .info-bar { position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.8); display: flex; justify-content: space-between; align-items: center; padding: 0 80px; z-index: 1000; font-size: 16px; font-weight: bold; border-bottom: 1px solid #333; box-sizing: border-box; }
 
-        /* ビデオグリッド */
+        /* ビデオエリア */
         #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); grid-auto-rows: 1fr; width: 100%; height: 100vh; padding: 70px 20px 100px 20px; gap: 20px; box-sizing: border-box; background: #121212; }
         .video-container { position: relative; width: 100%; height: 100%; border-radius: 20px; overflow: hidden; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         video.screen-share { transform: scaleX(1) !important; object-fit: contain; }
         .nickname-label { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); padding: 6px 14px; border-radius: 8px; font-size: 14px; }
 
-        /* ボタン類 */
+        /* ボタン */
         .btn-main { width: 100%; padding: 18px; margin: 12px 0; border-radius: 60px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
         .btn-blue { background: #0078d4; color: white; }
         .btn-green { background: #0f9d58; color: white; }
@@ -40,7 +40,7 @@
         
         .toolbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; background: rgba(30,30,30,0.9); padding: 15px 40px; border-radius: 100px; z-index: 1000; }
         
-        /* 🎤 マイク・カメラボタン (ON:黒, OFF:赤) */
+        /* 🎤 マイク・カメラボタン (ON=黒, OFF=赤) */
         .icon-btn { width: 55px; height: 55px; border-radius: 50%; border: none; background: #444; color: white; cursor: pointer; font-size: 24px; transition: background 0.3s; }
         .icon-btn:hover { background: #666; }
         .icon-btn.off { background: #ea4335 !important; }

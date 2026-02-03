@@ -7,6 +7,7 @@ const sndTitle = new Audio('/sounds/title.mp3'); sndTitle.loop = true;
 const sndNotify = new Audio('/sounds/notify.mp3');
 const sndSuccess = new Audio('https://www.soundjay.com/buttons/sounds/button-37.mp3');
 
+// 画面切り替え
 const show = (id) => {
     document.querySelectorAll('body > div.full, body > div#screen-call').forEach(d => d.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
@@ -22,7 +23,7 @@ function initApp() {
     document.getElementById('body-bg').className = (h >= 5 && h < 17) ? 'day-bg' : 'night-bg';
 }
 
-// 認証
+// 認証ロジック
 let ans;
 function startCaptcha() {
     sndTitle.pause();
@@ -50,7 +51,7 @@ function checkCaptcha() {
     }
 }
 
-// 🚀 高速部屋作成（ラグなし）
+// 🚀 高速部屋作成 (サーバー応答を待たずにカメラ起動)
 async function handleCreate() {
     myNick = document.getElementById('user-nick').value.trim();
     if(!myNick) return alert("名前を入力してください！");
@@ -58,7 +59,7 @@ async function handleCreate() {
     const id = prompt("部屋ID(6文字)を決めてください");
     if(id && id.length === 6) { 
         currentRoom = id;
-        // 先にカメラ起動プロセスを開始（爆速化）
+        // 先行してカメラ起動
         startSession(id); 
         socket.emit('create-room', id); 
         document.getElementById('approval-box-container').style.display = 'block';
@@ -103,12 +104,13 @@ function approveUser(targetId) {
 
 socket.on('join-approved', () => { startSession(currentRoom); });
 
-// 📹 セッション開始（高画質化設定）
+// 📹 セッション開始 (高画質設定)
 async function startSession(roomId) {
+    // 重複実行防止
     if (!document.getElementById('screen-call').classList.contains('hidden')) return;
 
     try {
-        // ✨ HD画質設定 (1280x720) ✨
+        // ✨ 高画質設定 (1280x720以上)
         myStream = await navigator.mediaDevices.getUserMedia({
             video: { 
                 width: { ideal: 1280 }, 
@@ -166,7 +168,7 @@ async function toggleScreenShare() {
         return;
     }
     try {
-        // 画面共有も高画質設定
+        // 画面共有も高画質
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: true });
         addVideo(screenStream, "画面共有", false, true);
         Object.values(peer.connections).forEach(connList => {

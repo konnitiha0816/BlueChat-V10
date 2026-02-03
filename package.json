@@ -1,7 +1,7 @@
 {
-  "name": "blue-chat-v7-ultimate",
-  "version": "7.5.0",
-  "description": "High Quality Video Chat",
+  "name": "blue-chat-ultimate",
+  "version": "8.0.0",
+  "description": "The Ultimate Video Chat Experience",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

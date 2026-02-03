@@ -20,19 +20,19 @@ io.on('connection', (socket) => {
     socket.on('request-join', (data) => {
         const room = rooms.get(data.roomId);
         if (room) {
-            // ホストへ承認要請を送る
+            // ホストへ通知
             io.to(room.hostId).emit('admin-approval-request', { 
                 senderId: socket.id, 
                 nickname: data.nickname 
             });
-            // ゲストには待機画面を出させる
+            // ゲストへ待機指示
             socket.emit('waiting-approval');
         } else {
             socket.emit('join-error', '部屋が見つかりません');
         }
     });
 
-    // 承認実行
+    // 承認処理
     socket.on('approve-user', (targetId) => {
         io.to(targetId).emit('join-approved');
     });
